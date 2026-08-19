@@ -29,7 +29,7 @@ sudo mount -a
 
 # connect to datadog
 #===================
-DD_API_KEY=dd31303c0eba9e900d834666d3c2e08e \
+DD_API_KEY=
 DD_SITE="uk1.datadoghq.com" \
 DD_APM_INSTRUMENTATION_ENABLED=host \
 DD_DATA_STREAMS_ENABLED=true \
