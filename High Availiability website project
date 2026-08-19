@@ -1,0 +1,349 @@
+# High Availability AWS Infrastructure Deployment Guide
+
+This project demonstrates how to deploy a **Highly Available Web Application** on AWS with monitoring, alerting, auto scaling, load balancing, shared storage, HTTPS, and DNS configuration.
+
+---
+
+## Repository
+
+**Configuration Management Scripts**
+
+```text
+https://github.com/MediLabdemo/Configuration_management.git
+```
+
+---
+
+# Table of Contents
+
+1. [Create the High Availability Network](#step-1-create-the-high-availability-network)
+2. [Create Amazon EFS](#step-2-create-amazon-efs)
+3. [Create a Datadog Account](#step-3-create-a-datadog-account)
+4. [Create the Jump Server](#step-4-create-the-jump-server-bastion-host)
+5. [Configure Slack Notifications](#step-5-configure-slack-notifications)
+6. [Configure Datadog Monitoring](#step-6-configure-datadog-monitoring--alerting)
+7. [Deploy the Web Application](#step-7-deploy-the-web-application)
+8. [Configure Route 53 Hosted Zone](#step-8-configure-route-53-hosted-zone)
+9. [Configure HTTPS Certificate](#step-9-configure-https-ssl-certificate)
+10. [Documentation & Defence Preparation](#step-10-documentation--defence-preparation)
+
+---
+
+# Architecture
+
+```
+                    Internet
+                        │
+                Internet Gateway
+                        │
+        ┌─────────────────────────────────┐
+        │              VPC                │
+        │                                 │
+        │  Public Subnet A   Public Subnet B
+        │        │                 │
+        │        └──── Load Balancer ────┐
+        │                                │
+        │                        Auto Scaling Group
+        │                                │
+        │      Private Subnet A   Private Subnet B
+        │              │                │
+        │              └──── Amazon EFS ─┘
+        │
+        │      NAT Gateway
+        │
+        └─────────────────────────────────┘
+
+                 Datadog
+                     │
+                  Slack Alerts
+```
+
+---
+
+# Step 1: Create the High Availability Network
+
+## Tasks
+
+* Create a **VPC**
+* Create **4 Subnets**
+
+  * Public Subnet A
+  * Public Subnet B
+  * Private Subnet A
+  * Private Subnet B
+* Create an **Internet Gateway**
+* Create a **NAT Gateway**
+* Configure Route Tables
+
+  * Use the **Main Route Table** for Public Subnets.
+  * Create a separate **Private Route Table**.
+* Associate:
+
+  * Public Subnets → Main Route Table
+  * Private Subnets → Private Route Table
+* Create the following Security Groups:
+
+  * `public-sg`
+  * `private-sg`
+  * `loadbalancer-sg`
+
+---
+
+# Step 2: Create Amazon EFS
+
+## Tasks
+
+* Create an Amazon Elastic File System (EFS).
+* Create Mount Targets.
+* Attach the EFS to the required Availability Zones.
+* Allow NFS traffic (TCP Port **2049**) between:
+
+  * `private-sg`
+  * `public-sg`
+* Create an **EFS Access Point**.
+
+---
+
+# Step 3: Create a Datadog Account
+
+## Tasks
+
+1. Create a Datadog account.
+2. Navigate to:
+
+```
+Infrastructure → Linux
+```
+
+3. Copy the Linux Agent installation command.
+4. Save it for later use in the EC2 User Data script.
+
+---
+
+# Step 4: Create the Jump Server (Bastion Host)
+
+## Tasks
+
+* Launch a **t2.small** EC2 instance.
+* Deploy it in a **Public Subnet**.
+* Create an SSH Key Pair.
+* Download the User Data script from:
+
+```
+https://github.com/digitalwitchdemo/Configuration_management.git
+```
+
+* Replace the Datadog variables with your own values.
+* Paste the script into the EC2 **User Data** section.
+
+---
+
+# Step 5: Configure Slack Notifications
+
+## Tasks
+
+* Create a Slack Workspace.
+* Create a Notification Channel.
+* Integrate Datadog with Slack.
+* Invite the Datadog App into the channel.
+
+---
+
+# Step 6: Configure Datadog Monitoring & Alerting
+
+## Tasks
+
+* Create a Notification Rule.
+* Select the Slack Channel.
+* Create a CPU Utilization Monitor.
+* Attach the Notification Rule.
+* Trigger a CPU spike.
+* Verify Slack receives the alert.
+
+---
+
+# Step 7: Deploy the Web Application
+
+## 7.1 Create a Launch Template
+
+* Instance Type: **t2.small**
+* Use the provided User Data script.
+* Configure:
+
+  * IAM Role
+  * Security Group
+  * Key Pair
+
+---
+
+## 7.2 Create an Auto Scaling Group
+
+* Use the Launch Template.
+* Deploy into the Private Subnets.
+* Configure:
+
+  * Minimum Capacity
+  * Desired Capacity
+  * Maximum Capacity
+
+---
+
+## 7.3 Create a Target Group
+
+* Target Type: **Instance**
+* Configure Health Checks.
+
+---
+
+## 7.4 Create an Application Load Balancer
+
+Deploy into the Public Subnets.
+
+Configure:
+
+* Security Group
+* HTTP Listener (Port 80)
+* Target Group
+
+Test:
+
+```bash
+http://<load-balancer-dns-name>
+```
+
+---
+
+# Step 8: Configure Route 53 Hosted Zone
+
+## Tasks
+
+* Create a Public Hosted Zone.
+* Copy the four AWS Name Servers.
+* Login to Namecheap.
+* Replace the Namecheap Name Servers with the AWS Name Servers.
+* Create an Alias Record pointing to the Load Balancer.
+
+Verify DNS resolution.
+
+---
+
+# Step 9: Configure HTTPS (SSL)
+
+## Request Certificate
+
+Open:
+
+```
+AWS Certificate Manager (ACM)
+```
+
+* Request a Public Certificate.
+* Select your Domain.
+* Create the required CNAME validation record.
+* Wait until the certificate status changes to **Issued**.
+
+---
+
+## Configure HTTPS Listener
+
+Go to the Load Balancer.
+
+Create:
+
+* HTTPS Listener (443)
+* Attach the ACM Certificate.
+* Route traffic to the Target Group.
+
+Test:
+
+```bash
+https://your-domain.com
+```
+
+Once confirmed, either:
+
+* Delete the HTTP Listener, or
+* Configure HTTP → HTTPS Redirection.
+
+---
+
+# Step 10: Documentation & Defence Preparation
+
+## Tasks
+
+* Document every deployment step.
+* Capture screenshots.
+* Ensure every team member understands the deployment.
+* Prepare for project defence.
+* Be ready to explain every stage of the deployment.
+
+---
+
+# Project Deliverables
+
+| Component                 | Status |
+| ------------------------- | ------ |
+| High Availability VPC     | ✅      |
+| Public & Private Subnets  | ✅      |
+| NAT Gateway               | ✅      |
+| Internet Gateway          | ✅      |
+| Security Groups           | ✅      |
+| Amazon EFS                | ✅      |
+| Datadog Monitoring        | ✅      |
+| Slack Notifications       | ✅      |
+| Jump Server               | ✅      |
+| Launch Template           | ✅      |
+| Auto Scaling Group        | ✅      |
+| Target Group              | ✅      |
+| Application Load Balancer | ✅      |
+| Route 53 Hosted Zone      | ✅      |
+| Namecheap Integration     | ✅      |
+| SSL Certificate           | ✅      |
+| HTTPS Listener            | ✅      |
+| Final Documentation       | ✅      |
+
+---
+
+# Technologies Used
+
+* Amazon VPC
+* Amazon EC2
+* Amazon EFS
+* Amazon Route 53
+* AWS Certificate Manager (ACM)
+* Application Load Balancer (ALB)
+* Auto Scaling Group (ASG)
+* IAM
+* Security Groups
+* Datadog
+* Slack
+* Namecheap DNS
+
+---
+
+# Validation Checklist
+
+* [ ] VPC Created
+* [ ] Public Subnets Created
+* [ ] Private Subnets Created
+* [ ] NAT Gateway Created
+* [ ] Internet Gateway Attached
+* [ ] Security Groups Configured
+* [ ] EFS Mounted Successfully
+* [ ] Jump Server Running
+* [ ] Datadog Agent Installed
+* [ ] Slack Notifications Working
+* [ ] Launch Template Created
+* [ ] Auto Scaling Group Created
+* [ ] Target Group Healthy
+* [ ] Load Balancer Working
+* [ ] Domain Resolving
+* [ ] SSL Certificate Issued
+* [ ] HTTPS Working
+* [ ] Documentation Completed
+
+---
+
+## Author
+
+**MediLab project demo**
