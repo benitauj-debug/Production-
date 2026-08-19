@@ -1201,58 +1201,6 @@ The architecture diagram illustrates the relationship between:
 
 The GitHub repository can be organized as follows:
 
-```
-aws-two-tier-high-availability/
-│
-├── README.md
-│
-├── architecture/
-│   └── two-tier-architecture.png
-│
-├── screenshots/
-│   ├── 01-vpc.png
-│   ├── 02-subnets.png
-│   ├── 03-route-tables.png
-│   ├── 04-internet-gateway.png
-│   ├── 05-nat-gateway.png
-│   ├── 06-security-groups.png
-│   ├── 07-jump-server.png
-│   ├── 08-mobaxterm.png
-│   ├── 09-efs.png
-│   ├── 10-launch-template.png
-│   ├── 11-auto-scaling.png
-│   ├── 12-load-balancer.png
-│   ├── 13-route53.png
-│   ├── 14-acm.png
-│   ├── 15-datadog.png
-│   └── 16-slack.png
-│
-└── scripts/
-    └── webserver-user-data.sh
-```
-
----
-
-## 43. Important Security Note for GitHub
-
-Sensitive information must not be uploaded to a public GitHub repository.
-
-Do not upload:
-
-- Private SSH keys
-- AWS access keys
-- AWS secret keys
-- Datadog API keys
-- Passwords
-- Database credentials
-- Secrets
-
-The `4036` private key must remain outside the GitHub repository.
-
-The Datadog API key should also be removed from any public user-data script before publishing it.
-
-> For a production implementation, secrets should preferably be stored in AWS Secrets Manager or AWS Systems Manager Parameter Store and retrieved securely using IAM permissions.
-
 ---
 
 ## 44. Production Improvements
