@@ -42,9 +42,9 @@ sudo mount -a
 #========================================
 sudo chown -R www-data:www-data /var/www/html
 
-# DAtadog Connection
+# Datadog Connection
 #======================
-DD_API_KEY=3654c60a29499ead95e60d925b7ead39 \
+DD_API_KEY=
 DD_APP_KEY=ddapp_WR6CcYGnP94JnpChWa5ksKyYPyV91JHNXY \
 DD_SITE="uk1.datadoghq.com" \
 DD_APM_INSTRUMENTATION_ENABLED=host \
